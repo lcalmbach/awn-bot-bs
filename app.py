@@ -1,7 +1,7 @@
 import streamlit as st
 from awn_bot import AwnBot
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __author__ = "Lukas Calmbach"
 __author_email__ = "lcalmbach@gmail.com"
 VERSION_DATE = "2023-11-18"

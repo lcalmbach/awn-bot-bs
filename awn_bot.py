@@ -13,14 +13,14 @@ class AwnBot:
         self.streets.sort()
 
     def show_info(self):
-        st.subheader("🏠AWN-Finder")
+        st.subheader("🔎AWN-Finder")
         with st.expander("Informationen zur App"):
             st.markdown(f"{texts['info']}")
 
     def show_ui(self):
-        
         self.show_info()
 
+        st.markdown('**Gib deine Adresse ein:**')
         cols = st.columns(2)
         with cols[0]:
             self.street = st.selectbox("Strasse", options=self.streets)
@@ -44,7 +44,7 @@ class AwnBot:
         options_floors.sort()
         with cols[0]:
             self.floor = st.selectbox("Stockwerk", options=options_floors)
-        st.markdown('Wähle deine Wohnung aus:')
+        st.markdown('Wähle deine Wohnung aus, bei mehreren Wohnungen achte auf die Zimmerzahl oder Grösse):')
         df = self.apartments[(self.apartments['egid'] == self.egid) & (self.apartments['wstwk_decoded'] == self.floor)]
         
         fields = ['egid', 'whgnr', 'wstwk_decoded', 'wbez', 'warea', 'wazim']
