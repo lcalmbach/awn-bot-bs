@@ -61,10 +61,13 @@ class AwnBot:
     def show_map(self, df):
         map_center = [df["latitude"].mean(), df["longitude"].mean()]
         map = folium.Map(location=map_center, zoom_start=18)
+        tool_tip = f'''{self.street} {self.housenumber}\n
+{self.plz} {self.location}\n\n EGID: {self.egid}'''
+        st.write(tool_tip)
         for index, row in df.iterrows():
             folium.Marker(
                 [row["latitude"], row["longitude"]],
-                popup=f'Lat: {row["latitude"]}, Long: {row["longitude"]}',
+                popup=tool_tip,
             ).add_to(map)
         folium_static(map)
 
@@ -115,7 +118,7 @@ class AwnBot:
             else:
                 ort_options = record["dplzname"]
                 self.egid = record.iloc[0]["egid"]
-            st.selectbox("Ort:", ort_options, disabled=True)
+            self.location = st.selectbox("Ort:", ort_options, disabled=True)
         if self.egid > 0:
             self.show_map(record)
         # st.markdown('**Gebäude**')
