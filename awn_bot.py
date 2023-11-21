@@ -63,7 +63,6 @@ class AwnBot:
         map = folium.Map(location=map_center, zoom_start=18)
         tool_tip = f'''{self.street} {self.housenumber}\n
 {self.plz} {self.location}\n\n EGID: {self.egid}'''
-        st.write(tool_tip)
         for index, row in df.iterrows():
             folium.Marker(
                 [row["latitude"], row["longitude"]],
