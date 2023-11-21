@@ -1,10 +1,10 @@
 import streamlit as st
 from awn_bot import AwnBot
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 __author__ = "Lukas Calmbach"
 __author_email__ = "lcalmbach@gmail.com"
-VERSION_DATE = "2023-11-18"
+VERSION_DATE = "2023-11-21"
 my_name = "awn-finder-bs"
 my_emoji = "🏠"
 GIT_REPO = "https://github.com/lcalmbach/awn-bot-bs"
