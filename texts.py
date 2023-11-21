@@ -1,4 +1,5 @@
-texts = { 'info': """Die AWN (Administrative Wohnungsnummer) erlaubt die eindeutige Identifikation einer Wohnung im kantonalen Gebäude- und Wohnungsregister des Kantons Basel-Stadt. Wenn du nach Basel-Stadt zuziehst oder innerhalb des Kantons umziehst, musst du deshalb bei der Anmeldung immer auch die AWN deiner Wohnung angeben. Personen mit identischer AWN bilden einen Haushalt. Die AWN bestimmt somit die Haushaltszusammensetzung.
+texts = {
+    "info": """Die AWN (Administrative Wohnungsnummer) erlaubt die eindeutige Identifikation einer Wohnung im kantonalen Gebäude- und Wohnungsregister des Kantons Basel-Stadt. Wenn du nach Basel-Stadt zuziehst oder innerhalb des Kantons umziehst, musst du deshalb bei der Anmeldung immer auch die AWN deiner Wohnung angeben. Personen mit identischer AWN bilden einen Haushalt. Die AWN bestimmt somit die Haushaltszusammensetzung.
 
 *Wozu dient die AWN?*
 

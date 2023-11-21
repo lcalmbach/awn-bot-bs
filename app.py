@@ -28,13 +28,16 @@ def init():
 
 
 def main():
+    mode = "interactive"
     init()
     if "app" not in st.session_state:
-        st.session_state.app = AwnBot()
+        st.session_state.app = AwnBot(mode)
 
     st.session_state.app.show_ui()
-    st.markdown("---")
-    st.markdown(APP_INFO, unsafe_allow_html=True)
+
+    if mode != "bot":
+        st.markdown("---")
+        st.markdown(APP_INFO, unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
