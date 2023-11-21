@@ -1,7 +1,7 @@
 import streamlit as st
 from awn_bot import AwnBot
 
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 __author__ = "Lukas Calmbach"
 __author_email__ = "lcalmbach@gmail.com"
 VERSION_DATE = "2023-11-21"
@@ -19,11 +19,11 @@ APP_INFO = f"""<div style="background-color:powderblue; padding: 10px;border-rad
 
 
 def init():
-    st.set_page_config(  # Alternate names: setup_page, page, layout
-        layout="centered",  # Can be "centered" or "wide". In the future also "dashboard", etc.
-        initial_sidebar_state="auto",  # Can be "auto", "expanded", "collapsed"
-        page_title=my_name,  # String or None. Strings get appended with "• Streamlit".
-        page_icon=my_emoji,  # String, anything supported by st.image, or None.
+    st.set_page_config(
+        layout="centered",
+        initial_sidebar_state="auto",
+        page_title=my_name,
+        page_icon=my_emoji,
     )
 
 
