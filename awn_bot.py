@@ -8,7 +8,7 @@ from const import (
     APARTMENT_FILE,
     SYSTEM_PROMPT,
     user_questions,
-    assistant_questions,
+    assistant_responses,
     LLM_RETRIES,
     SLEEP_TIME_AFTER_ERROR,
 )
@@ -59,10 +59,19 @@ class AwnBot:
             st.markdown(f"{texts['info']}")
 
     def show_map(self, df):
+        """
+        Display a map with markers for each location in the given DataFrame.
+
+        Parameters:
+        - df (pandas.DataFrame): The DataFrame containing location data with latitude and longitude columns.
+
+        Returns:
+        None
+        """
         map_center = [df["latitude"].mean(), df["longitude"].mean()]
         map = folium.Map(location=map_center, zoom_start=18)
         tool_tip = f'''{self.street} {self.housenumber}\n
-{self.plz} {self.location}\n\n EGID: {self.egid}'''
+    {self.plz} {self.location}\n\n EGID: {self.egid}'''
         for index, row in df.iterrows():
             folium.Marker(
                 [row["latitude"], row["longitude"]],
@@ -186,6 +195,7 @@ class AwnBot:
                     completion.usage.prompt_tokens,
                 ]
                 response = completion.choices[0].message.content
+                print(response)
                 return response, tokens
             except Exception as err:
                 st.error(f"OpenAIError {err}")
@@ -264,46 +274,103 @@ class AwnBot:
             if key == "floor" and value > "" and status < Status.egid.value:
                 ...
 
+    def get_floors(self):
+        return self.apartments[self.apartments["egid"] == self.args["egid"]][
+            "wstwk_decoded"
+        ].unique()
+    
+    def get_apartments_on_floor(self):
+        apartments_on_floor = self.apartments[
+            (self.apartments["egid"] == self.args["egid"]) &
+            (self.apartments["wstwk_decoded"] == self.args["floor"])
+        ]
+        return apartments_on_floor
+
+    def get_records(self):
+        addresses = self.addresses
+        apartments = self.apartments
+        st.write(self.args)
+        if self.args["street"] > "":
+            addresses = addresses[
+                (addresses["strname"] == self.args['street'])
+            ]
+        if self.args["housenumber"] > "":
+            addresses = addresses[
+                (addresses["deinr"] == self.args['housenumber'])
+            ]
+        if self.args["plz"] != "":
+            addresses = addresses[
+                (addresses["dplz4"] == self.args['plz'])
+            ]
+        if (len(addresses) > 0) & (self.args["location"] > ""):
+            addresses = addresses[
+                (addresses["dplzname"] == self.args['plz'])
+            ]
+        if len(addresses) == 1:
+            self.args['egid'] = addresses.iloc[0]['egid']
+
+        if self.args["egid"] != "":
+            apartments = apartments[apartments["egid"] == self.args["egid"]]
+            if self.args["floor"] > "":
+                addresses = addresses[
+                    (addresses["egid"] == self.egid)
+                ]
+        return addresses, apartments
+
+    def get_address(self):
+        return f'{self.args["street"]} {self.args["housenumber"]}, {self.args["plz"]} {self.args["location"]} (EGID Gebäude: {self.args["egid"]})'
+    
     def show_bot(self):
-        display_messages = []
+        st.session_state.display_messages = []
         if "messages" not in st.session_state:
             st.session_state.messages = []
+            st.session_state.display_messages = []
             st.session_state.messages.append(
                 {"role": "system", "content": SYSTEM_PROMPT}
             )
-            display_messages.append(
+            st.session_state.display_messages.append(
                 {
                     "role": "assistant",
                     "content": "Guten Tag, Ich helfe dir gerne, deine AWN zu finden. Bitte gib unten deine Adresse ein",
                 }
             )
 
-        if prompt := st.chat_input(user_questions[self.status.name]):
-            print(assistant_questions[self.status.name].format(prompt))
+        if prompt := st.chat_input('Beispiel: Blumenrain 34, 4058 Basel, 1. Stock'):
+            st.session_state.display_messages.append({"role": "user", "content": prompt})
+            user_question = user_questions[self.status.name].format(prompt)
             st.session_state.messages.append(
                 {
                     "role": "user",
-                    "content": assistant_questions[self.status.name].format(prompt),
+                    "content": user_question,
                 }
             )
             response, tokens = self.get_completion(st.session_state.messages)
-            if self.status == Status.street:
+            try:
                 address_obj = json.loads(response)
                 self.get_status(address_obj)
-                st.write(self.status)
-                if self.status == Status.floor:
-                    response = f"😄Supi, gut gemacht. Deine Adresse lautet: ({self.address_text()}). Wenn das richtig ist dann brauche ich noch das Stockwerk. Gib einfach eine Zahl ein, z.B. 1 Wenn du im ersten Stock wohnst"
+                assistant_response = assistant_responses[self.status.name]
+            except Exception as err:
+                print(err)
+                assistant_response = response
+            
+            st.session_state.display_messages.append({"role": "assistant", "content": assistant_response})
+            st.session_state.messages.append({"role": "assistant", "content": assistant_response})
 
-            display_messages.append({"role": "assistant", "content": response})
-            st.session_state.messages.append({"role": "assistant", "content": response})
-
-        for msg in display_messages:
+        for msg in st.session_state.display_messages:
             if msg["role"] != "system":
                 st.chat_message(msg["role"]).write(msg["content"])
+        adrs, aps = self.get_records()
+        st.write(
+            self.get_address(),
+            f"Adressen: {len(adrs)}\nWohnungen: {len(aps)}",
+        )
+        if st.button("Starte nochmals neu"):
+            del st.session_state['display_messages']
+            del st.session_state['messages']
 
     def show_ui(self):
         self.show_info()
-        if self.mode == "interactive":
+        if self.mode == "form":
             self.show_interactive()
         elif self.mode == "bot":
             self.show_bot()
