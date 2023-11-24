@@ -13,10 +13,9 @@ user_questions = {
 }
 
 assistant_responses = {
-    "street": "Damit ich deine Wohnungsnummer bestimmen kann, brauche ich zunächst deine Adresse: z.B. Hauptstrasse 34, 4058, Basel:",
-    "housenumber": "Prima, du wohnst an der {}. Nun brauche ich aber noch eine Hausnummer.",
-    "plz": "Tut mir leide, die Postleitzahl oder der Ort brauche ich ebenfalls.",
-    "location": "Tut mir leide, den Ort oder die Postleitzahl brauche ich ebenfalls.",
-    "floor": "Prima, wir haben es fast geschafft. Nun brauche ich noch das Stockwerk.",
+    "street": {"content": "Damit ich deine Wohnungsnummer bestimmen kann, brauche ich zunächst deine Adresse: z.B. Hauptstrasse 34, 4058, Basel:", "includes": []},
+    "housenumber": {"content": "Prima, du wohnst an der {}. Nun brauche ich aber noch eine Hausnummer.", "includes": []},
+    "plz": {"content": "Tut mir leide, die Postleitzahl oder der Ort brauche ich ebenfalls.", "includes": []},
+    "location": {"content": "Tut mir leid, den Ort oder die Postleitzahl brauche ich ebenfalls.", "includes": []},
+    "floor": {"content": "Prima, wir haben es fast geschafft. Wenn das richtig ist, gib mir bitte noch das Stockwerk an. Ich finde an der Adresse *{}* folgende Stockewerke: {}. Wenn das nicht deine Adresse ist, so drücke einfach die *Start nochmals neu* Schaltfläche.", "includes": ["adrs", 'floors']}
 }
-

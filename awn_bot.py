@@ -13,7 +13,6 @@ from const import (
     SLEEP_TIME_AFTER_ERROR,
 )
 from tools import show_table, get_var
-import pandas as pd
 from openai import OpenAI
 from enum import Enum
 import difflib
@@ -43,14 +42,25 @@ class AwnBot:
         self.model = "gpt-3.5-turbo"
         self.temperature = 0
         self.max_tokens = 1000
+        # counts how often a status was reached, if a status is reached multiple times, the assistant will give more information
+        self.status_count = self.args = {
+            Status.street.name: 0,
+            Status.housenumber.name: 0,
+            Status.plz.name: 0,
+            Status.location.name: 0,
+            Status.egid.name: 0,
+            Status.floor.name: 0,
+            Status.apartment.name: 0
+        }
+        # These are the slots that are filled by the users answers
         self.args = {
-            "street": "",
-            "housenumber": "",
-            "plz": "",
-            "location": "",
-            "egid": "",
-            "floor": "",
-            "apartment": "",
+            Status.street.name: "",
+            Status.housenumber.name: "",
+            Status.plz.name: "",
+            Status.location.name: "",
+            Status.egid.name: "",
+            Status.floor.name: "",
+            Status.apartment.name: "",
         }
 
     def show_info(self):
@@ -242,8 +252,10 @@ class AwnBot:
 
     def get_status(self, response):
         status = self.status.value
+        self.status_count[Status.street.name] += 1
         for key, value in response.items():
-            if key == "street" and value > "" and status < Status.housenumber.value:
+            if key == Status.street.name and value > "" and status < Status.housenumber.value:
+                
                 street = self.get_valid_street_name(value)
                 if street:
                     self.args["street"] = street
@@ -289,7 +301,7 @@ class AwnBot:
     def get_records(self):
         addresses = self.addresses
         apartments = self.apartments
-        st.write(self.args)
+        # st.write(self.args)
         if self.args["street"] > "":
             addresses = addresses[
                 (addresses["strname"] == self.args['street'])
@@ -320,8 +332,20 @@ class AwnBot:
     def get_address(self):
         return f'{self.args["street"]} {self.args["housenumber"]}, {self.args["plz"]} {self.args["location"]} (EGID Gebäude: {self.args["egid"]})'
     
+    def format_response(self, response):
+        includes = []
+        for include in assistant_responses[self.status.name]['includes']:
+            if include == 'adrs':
+                includes.append(self.get_address())
+            if include == 'floors':
+                includes.append(self.get_floors())
+        if includes:
+            response = response.format(*includes)
+        return response
+                
     def show_bot(self):
         st.session_state.display_messages = []
+        adrs, aps = None, None
         if "messages" not in st.session_state:
             st.session_state.messages = []
             st.session_state.display_messages = []
@@ -348,22 +372,22 @@ class AwnBot:
             try:
                 address_obj = json.loads(response)
                 self.get_status(address_obj)
-                assistant_response = assistant_responses[self.status.name]
+                assistant_response = assistant_responses[self.status.name]['content']
+                assistant_response = self.format_response(assistant_response)
+                
+
             except Exception as err:
                 print(err)
                 assistant_response = response
             
+            adrs, aps = self.get_records()
             st.session_state.display_messages.append({"role": "assistant", "content": assistant_response})
             st.session_state.messages.append({"role": "assistant", "content": assistant_response})
 
         for msg in st.session_state.display_messages:
             if msg["role"] != "system":
                 st.chat_message(msg["role"]).write(msg["content"])
-        adrs, aps = self.get_records()
-        st.write(
-            self.get_address(),
-            f"Adressen: {len(adrs)}\nWohnungen: {len(aps)}",
-        )
+        
         if st.button("Starte nochmals neu"):
             del st.session_state['display_messages']
             del st.session_state['messages']
