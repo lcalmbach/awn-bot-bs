@@ -1,5 +1,5 @@
 import streamlit as st
-from awn_bot import AwnBot
+from awn_finder import AwnBot
 
 __version__ = "0.0.7"
 __author__ = "Lukas Calmbach"
@@ -34,10 +34,7 @@ def get_app():
     else:
         mode = DEFAULT_MODE
     if "app" not in st.session_state:
-        st.session_state.app = AwnBot(mode)
-    elif st.session_state.app.mode != mode:
-        st.session_state.app = AwnBot(mode)
-    st.session_state.mode = mode
+        st.session_state.app = AwnBot()
 
 
 def main():
