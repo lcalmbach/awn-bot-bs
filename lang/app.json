@@ -1,0 +1,42 @@
+{
+    "source": {
+        "created_by": "App erstellt von",
+        "powered_by": "Powered by",
+        "version": "Version",
+        "language": "Sprache",
+        "translation": "\u00dcbersetzung",
+        "data_source": "Data Source"
+    },
+    "de": {
+        "created_by": "App erstellt von",
+        "powered_by": "Powered by",
+        "version": "Version",
+        "language": "Sprache",
+        "translation": "\u00dcbersetzung",
+        "data_source": "Data Source"
+    },
+    "fr": {
+        "created_by": "Application cr\u00e9\u00e9e par",
+        "powered_by": "Propuls\u00e9 par",
+        "version": "Version",
+        "language": "Langue",
+        "translation": "Traduction",
+        "data_source": "Source de donn\u00e9es"
+    },
+    "it": {
+        "created_by": "App creata da",
+        "powered_by": "Alimentato da",
+        "version": "Versione",
+        "language": "Lingua",
+        "translation": "Traduzione",
+        "data_source": "Fonte dati"
+    },
+    "en": {
+        "created_by": "App created by",
+        "powered_by": "Powered by",
+        "version": "Version",
+        "language": "Language",
+        "translation": "Translation",
+        "data_source": "Data Source"
+    }
+}

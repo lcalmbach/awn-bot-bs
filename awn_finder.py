@@ -1,24 +1,46 @@
 import streamlit as st
 import pandas as pd
-import time
-import json
-from texts import texts
 from const import (
     ADR_FILE,
     APARTMENT_FILE,
-    assistant_responses,
 )
 from tools import show_table
+from const import contact, contact_email
 from enum import Enum
 import folium
+import re
 from streamlit_folium import folium_static
+
+from lang import get_lang
+
+
+contact_email = "vitus.thali@bs.ch"
+contact = "Vitus Thali"
+
+
+def lang(text):
+    """
+    Returns the translated text of the given text.
+    It passes the PAGE variable holding the key to the current module
+
+    Args:
+        text (str): The text to determine the language of.
+
+    Returns:
+        str: translated text.
+    """
+    return get_lang(__name__)[text]
+
+
+mode_options = []
 
 
 class Mode(Enum):
-    SINGLE=0
-    MULTIPLE=1
+    SINGLE = 0
+    MULTIPLE = 1
 
-class AwnBot:
+
+class AwnFinder:
     def __init__(self):
         self.mode = Mode.SINGLE.value
         self.addresses = pd.read_parquet(ADR_FILE)
@@ -26,20 +48,42 @@ class AwnBot:
         self.streets = list(self.addresses["strname"].unique())
         self.locations = list(self.addresses["dplzname"].unique())
         self.streets.sort()
-        self.appartments_df = pd.DataFrame()
+        self.apartment_df = pd.DataFrame()
         self.egid = 0
-        
+        self.buildings_df = pd.DataFrame()
+        self.housenumber = None
+
+    def sort_house_numbers(self, housenumbers: list) -> list:
+        def extract_parts(s):
+            parts = re.split("([0-9]+)", s)
+            return (
+                int(parts[1]) if parts[1].isdigit() else parts[1],
+                int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else parts[2],
+            )
+
+        [x for x in housenumbers if x is not None]
+        sorted_numbers = sorted(housenumbers, key=extract_parts)
+        return sorted_numbers
 
     def show_info(self):
-        with st.expander("Informationen zur App"):
-            if self.mode == Mode.SINGLE.value:
-                st.markdown(f"{texts['info']}")
+        """
+        Displays information about the app based on the selected mode.
+
+        Parameters:
+        - self: The instance of the class.
+
+        Returns:
+        - None
+        """
+        with st.expander(lang("app_information")):
+            if mode_options.index(self.mode) == Mode.SINGLE.value:
+                st.markdown(lang("info_single"))
             else:
-                st.markdown(f"{texts['info_multiple']}")
-        
+                st.markdown(lang("info_multiple"))
+
     def show_map(self, df):
         """
-        Display a map with markers for each location in the given DataFrame.
+        Displays a map with markers for each location in the given DataFrame.
 
         Parameters:
         - df (pandas.DataFrame): The DataFrame containing location data with latitude and longitude columns.
@@ -49,19 +93,21 @@ class AwnBot:
         """
         map_center = [df["latitude"].mean(), df["longitude"].mean()]
         map = folium.Map(location=map_center, zoom_start=18)
-        tool_tip = f'''{self.street} {self.housenumber}\n
-    {self.plz} {self.location}\n\n EGID: {self.egid}'''
-        for index, row in df.iterrows():
+        tool_tip = f"""{self.street} {self.housenumber}\n
+    {self.plz} {self.location}\n\n EGID: {self.egid}"""
+        for _, row in df.iterrows():
             folium.Marker(
                 [row["latitude"], row["longitude"]],
                 popup=tool_tip,
             ).add_to(map)
         folium_static(map)
-       
+
     def show_multiple_mode(self):
-        def get_appartments(egid: int):
+        def get_apartment(egid: int):
             df = self.apartments[self.apartments["egid"] == egid]
-            df = df[["egid", "whgnr", "wstwk_decoded", "wbez", "warea", "wazim", "ewid"]]
+            df = df[
+                ["egid", "whgnr", "wstwk_decoded", "wbez", "warea", "wazim", "ewid"]
+            ]
             df.columns = [
                 "EGID",
                 "AWN",
@@ -71,81 +117,140 @@ class AwnBot:
                 "Anz. Zimmer",
                 "EWID",
             ]
-            df['Adresse'] = self.street + ' ' + self.housenumber + ', ' + self.plz + ' ' + self.location
+            df["Adresse"] = (
+                self.street
+                + " "
+                + self.housenumber
+                + ", "
+                + self.plz
+                + " "
+                + self.location
+            )
             cols = df.columns.tolist()
             cols = [cols[-1]] + cols[:-1]
             df = df[cols]
             return df
 
-        st.markdown("Suche Adressen und drücke Schaltfläche `Adresse hinzufügen`")
+        self.show_info()
+        st.markdown(f'**{lang("add_address_button_label")}:**')
         self.egid = 0
         cols = st.columns(2)
         with cols[0]:
-            options_streets = ["<Wähle eine Strasse>"] + self.streets
-            self.street = st.selectbox("Strasse", options=options_streets)
+            street_placeholder = st.empty()
+            options_streets = [f'<{lang("select_street")}>'] + self.streets
+            self.street = street_placeholder.selectbox(
+                lang("street"),
+                options=options_streets
+            )
         with cols[1]:
+            hnr_placeholder = st.empty()
             if options_streets.index(self.street) == 0:
                 housenumbers = self.addresses["deinr"].unique()
             else:
                 housenumbers = self.addresses[self.addresses["strname"] == self.street][
                     "deinr"
                 ].unique()
-            housenumbers = [x for x in housenumbers if x is not None]
-            housenumbers.sort()
+            housenumbers = self.sort_house_numbers(housenumbers)
 
-            hrn_options = ["<Wähle eine Hausnummer>"] + housenumbers
-            self.housenumber = st.selectbox(
-                "Hausnummer",
+            hrn_options = [f'<{lang("select_house_number")}>'] + housenumbers
+            self.housenumber = hnr_placeholder.selectbox(
+                lang("house_number"),
                 options=hrn_options,
                 disabled=self.street == "<Wähle eine Strasse>",
             )
-
+        # if self.housenumber != f'<{lang("select_house_number")}>':
         with cols[0]:
+            po_placeholder = st.empty()
             if hrn_options.index(self.housenumber) == 0:
                 plz_options = self.addresses["dplz4"].unique().sort()
-                plz_options = ["Wähle eine Postleitzahl"] + [plz_options]
+                plz_options = [f'<{lang("select_postal_code")}>'] + [plz_options]
             else:
                 plz_options = self.addresses[
                     (self.addresses["strname"] == self.street)
                     & (self.addresses["deinr"] == self.housenumber)
                 ]["dplz4"].unique()
                 plz_options = [str(x) for x in plz_options if x is not None]
-            self.plz = st.selectbox("Postleitzahl", options=plz_options)
+            self.plz = po_placeholder.selectbox(
+                lang("postal_code"),
+                options=plz_options,
+                disabled=self.housenumber == f'<{lang("select_house_number")}>'
+            )
         record = self.addresses[
             (self.addresses["strname"] == self.street)
             & (self.addresses["deinr"] == self.housenumber)
         ][["dplzname", "egid", "latitude", "longitude"]].drop_duplicates()
-
         with cols[1]:
-            if self.plz == "Wähle eine Postleitzahl":
+            location_placeholder = st.empty()
+            if self.plz == f'<{lang("select_postal_code")}>':
                 ort_options = list(self.addresses["dplzname"])
                 ort_options.sort()
             else:
                 ort_options = record["dplzname"]
                 self.egid = record.iloc[0]["egid"]
-            self.location = st.selectbox("Ort:", ort_options, disabled=True)
-        if self.egid > 0:
-            self.show_map(record)
-        cols = st.columns(2)
-        if st.button('Adresse hinzufügen', disabled=self.egid == 0):
-            self.appartments_df = pd.concat([self.appartments_df, get_appartments(self.egid)])
-        if len(self.appartments_df) > 0:
-            show_table(self.appartments_df, {})
-            st.download_button(
-                label="Wohnungen herunterladen",
-                data=self.appartments_df.to_csv(sep=';').encode('utf-8'),
-                file_name="wohnungen.csv",
-                mime="text/csv",
+            self.location = location_placeholder.selectbox(
+                label=f'{lang("location")}:',
+                options = ort_options,
+                disabled=len(ort_options) > 1
             )
-    
+
+        if st.button(lang("add_address"), disabled=self.egid == 0):
+            self.apartment_df = pd.concat([self.apartment_df, get_apartment(self.egid)])
+        cols = st.columns(2)
+        with cols[0]:
+            if len(self.apartment_df) > 0:
+                st.download_button(
+                    label=lang("download_appartments"),
+                    data=self.apartment_df.to_csv(sep=";").encode("utf-8"),
+                    file_name="wohnungen.csv",
+                    mime="text/csv",
+                )
+                self.buildings_df = pd.concat([self.buildings_df, record])
+
+        if len(self.apartment_df) > 0:
+            with cols[1]:
+                if st.button(lang("reset_input")):
+                    self.buildings_df = pd.DataFrame()
+                    self.apartment_df = pd.DataFrame()
+                    self.street = street_placeholder.selectbox(
+                        lang("street"),
+                        options=options_streets,
+                        index=0,
+                        key='xxx'
+                    )
+                    self.housenumber = hnr_placeholder.selectbox(
+                        lang("house_number"),
+                        options=hrn_options,
+                        index = 0,
+                        disabled=True,
+                        key='xx1'
+                    )
+                    self.plz = po_placeholder.selectbox(
+                        lang("postal_code"),
+                        options=[f'<{lang("select_postal_code")}>'],
+                        index=0,
+                        disabled=True,
+                        key='xx2'
+                    )
+                    self.location = location_placeholder.selectbox(
+                        f'{lang("location")}:',
+                        options=['Basel'],
+                        index=0,
+                        disabled=True,
+                        key='xx3'
+                    )
+
+        if len(self.apartment_df) > 0:
+            show_table(self.apartment_df, {})
+            self.show_map(self.buildings_df)
+
     def show_single_mode(self):
         self.show_info()
-        st.markdown("**Gib bitte deine Adresse ein:**")
+        st.markdown(f'**{lang("enter_address")}:**')
         self.egid = 0
         cols = st.columns(2)
         with cols[0]:
-            options_streets = ["<Wähle eine Strasse>"] + self.streets
-            self.street = st.selectbox("Strasse", options=options_streets)
+            options_streets = [f'<{lang("select_street")}>'] + self.streets
+            self.street = st.selectbox(lang("street"), options=options_streets)
         with cols[1]:
             if options_streets.index(self.street) == 0:
                 housenumbers = self.addresses["deinr"].unique()
@@ -154,90 +259,102 @@ class AwnBot:
                     "deinr"
                 ].unique()
             housenumbers = [x for x in housenumbers if x is not None]
-            housenumbers.sort()
+            housenumbers = self.sort_house_numbers(housenumbers)
 
-            hrn_options = ["<Wähle eine Hausnummer>"] + housenumbers
+            hrn_options = [f'<{lang("select_house_number")}>'] + housenumbers
             self.housenumber = st.selectbox(
-                "Hausnummer",
+                lang("house_number"),
                 options=hrn_options,
-                disabled=self.street == "<Wähle eine Strasse>",
+                disabled=self.street == f'<{lang("select_street")}>',
             )
 
         with cols[0]:
             if hrn_options.index(self.housenumber) == 0:
                 plz_options = self.addresses["dplz4"].unique().sort()
-                plz_options = ["Wähle eine Postleitzahl"] + [plz_options]
+                plz_options = [lang("select_postal_code")] + [plz_options]
             else:
                 plz_options = self.addresses[
                     (self.addresses["strname"] == self.street)
                     & (self.addresses["deinr"] == self.housenumber)
                 ]["dplz4"].unique()
                 plz_options = [str(x) for x in plz_options if x is not None]
-            self.plz = st.selectbox("Postleitzahl", options=plz_options)
+            self.plz = st.selectbox(lang("postal_code"), options=plz_options)
         record = self.addresses[
             (self.addresses["strname"] == self.street)
             & (self.addresses["deinr"] == self.housenumber)
         ][["dplzname", "egid", "latitude", "longitude"]].drop_duplicates()
 
         with cols[1]:
-            if self.plz == "Wähle eine Postleitzahl":
+            if self.plz == lang("select_postal_code"):
                 ort_options = list(self.addresses["dplzname"])
                 ort_options.sort()
             else:
                 ort_options = record["dplzname"]
                 self.egid = record.iloc[0]["egid"]
-            self.location = st.selectbox("Ort:", ort_options, disabled=True)
-        if self.egid > 0:
-            self.show_map(record)
-        # st.markdown('**Gebäude**')
-        # st.markdown(f'Egid: {self.egid}')
+            self.location = st.selectbox(
+                f'{lang("location")}:', ort_options, disabled=True
+            )
+
         cols = st.columns(2)
         options_floors = self.apartments[self.apartments["egid"] == self.egid][
             "wstwk_decoded"
         ].unique()
-        options_floors.sort()
-        with cols[0]:
-            self.floor = st.selectbox("Stockwerk", options=options_floors)
-        contact_email = "vitus.thali@bs.ch"
-        contact = "Vitus Thali"
-        st.markdown(    
-            f'Wähle deine Wohnung aus. Bei mehreren Wohnungen auf dem gleichen Stockwerk kannst kannst die Zimmerzahl oder Grösse der Wohnung verwenden, um deine Wohnng zu erkennen. Bist du unsicher, dann wende dich bitte an <a href="mailto:{contact_email}">{contact}</a> (Statistisches Amt Basel Stadt).',
-            unsafe_allow_html=True,
-        )
-        df = self.apartments[
-            (self.apartments["egid"] == self.egid)
-            & (self.apartments["wstwk_decoded"] == self.floor)
-        ]
-        fields = ["egid", "whgnr", "wstwk_decoded", "wbez", "warea", "wazim", "ewid"]
-        df = df[fields]
-        df = df.sort_values("wstwk_decoded")
-        df.columns = [
-            "EGID",
-            "AWN",
-            "Stockwerk",
-            "Info",
-            "Fläche",
-            "Anz. Zimmer",
-            "EWID",
-        ]
-        settings = {"height": 200}
-        response = show_table(df, [], settings)
-        if response:
-            st.subheader(f"Deine Wohnungsnummer: {response['AWN']}")
+        if len(options_floors) > 0:
+            options_floors.sort()
+            with cols[0]:
+                self.floor = st.selectbox(lang("floor"), options=options_floors)
+        else:
+            self.floor = False
+
+        if self.floor:
+            st.markdown(
+                lang("select_apartment_with_explenation").format(
+                    contact_email, contact
+                ),
+                unsafe_allow_html=True,
+            )
+            df = self.apartments[
+                (self.apartments["egid"] == self.egid)
+                & (self.apartments["wstwk_decoded"] == self.floor)
+            ]
+            fields = [
+                "egid",
+                "whgnr",
+                "wstwk_decoded",
+                "wbez",
+                "warea",
+                "wazim",
+                "ewid",
+            ]
+            df = df[fields]
+            df = df.sort_values("wstwk_decoded")
+            df.columns = [
+                "EGID",
+                "AWN",
+                "Stockwerk",
+                "Info",
+                "Fläche",
+                "Anz. Zimmer",
+                "EWID",
+            ]
+            settings = {"height": 200}
+            response = show_table(df, [], settings)
+            if response:
+                st.subheader(f"{lang('your_awn')}: {response['AWN']}")
+            self.show_map(record)
 
     def address_text(self):
-        return f'{self.args["street"]} {self.args["housenumber"]}, {self.args["plz"]} {self.args["location"]} (EGID Gebäude: {self.args["egid"]})'
+        return f"{self.args['street']} {self.args['housenumber']}, {self.args['plz']} {self.args['location']} ({lang['egid_building']}: {self.args['egid']})"
 
-    
     def get_floors(self):
         return self.apartments[self.apartments["egid"] == self.args["egid"]][
             "wstwk_decoded"
         ].unique()
-    
+
     def get_apartments_on_floor(self):
         apartments_on_floor = self.apartments[
-            (self.apartments["egid"] == self.args["egid"]) &
-            (self.apartments["wstwk_decoded"] == self.args["floor"])
+            (self.apartments["egid"] == self.args["egid"])
+            & (self.apartments["wstwk_decoded"] == self.args["floor"])
         ]
         return apartments_on_floor
 
@@ -246,52 +363,45 @@ class AwnBot:
         apartments = self.apartments
         # st.write(self.args)
         if self.args["street"] > "":
-            addresses = addresses[
-                (addresses["strname"] == self.args['street'])
-            ]
+            addresses = addresses[(addresses["strname"] == self.args["street"])]
         if self.args["housenumber"] > "":
-            addresses = addresses[
-                (addresses["deinr"] == self.args['housenumber'])
-            ]
+            addresses = addresses[(addresses["deinr"] == self.args["housenumber"])]
         if self.args["plz"] != "":
-            addresses = addresses[
-                (addresses["dplz4"] == self.args['plz'])
-            ]
+            addresses = addresses[(addresses["dplz4"] == self.args["plz"])]
         if (len(addresses) > 0) & (self.args["location"] > ""):
-            addresses = addresses[
-                (addresses["dplzname"] == self.args['plz'])
-            ]
+            addresses = addresses[(addresses["dplzname"] == self.args["plz"])]
         if len(addresses) == 1:
-            self.args['egid'] = addresses.iloc[0]['egid']
+            self.args["egid"] = addresses.iloc[0]["egid"]
 
         if self.args["egid"] != "":
             apartments = apartments[apartments["egid"] == self.args["egid"]]
             if self.args["floor"] > "":
-                addresses = addresses[
-                    (addresses["egid"] == self.egid)
-                ]
+                addresses = addresses[(addresses["egid"] == self.egid)]
         return addresses, apartments
 
     def get_address(self):
-        return f'{self.args["street"]} {self.args["housenumber"]}, {self.args["plz"]} {self.args["location"]} (EGID Gebäude: {self.args["egid"]})'
-    
+        return f"{self.args['street']} {self.args['housenumber']}, {self.args['plz']} {self.args['location']} (EGID Gebäude: {self.args['egid']})"
+
     def format_response(self, response):
         includes = []
-        for include in assistant_responses[self.status.name]['includes']:
-            if include == 'adrs':
+        for include in assistant_responses[self.status.name]["includes"]:
+            if include == "adrs":
                 includes.append(self.get_address())
-            if include == 'floors':
+            if include == "floors":
                 includes.append(self.get_floors())
         if includes:
             response = response.format(*includes)
         return response
-                
-    
+
     def show_ui(self):
+        global mode_options
+
+        mode_options = lang("mode_options")
         st.subheader("🔎AWN-Finder")
-        self.mode=st.radio("Modus", ["Einzelne Wohnung", "Mehrere Gebäude"])
-        if self.mode == "Einzelne Wohnung":
+
+        self.mode = st.radio(lang("mode"), mode_options)
+        if mode_options.index(self.mode) == 0:
             self.show_single_mode()
         else:
+            self.housenumber = None
             self.show_multiple_mode()
-        

@@ -11,6 +11,6 @@ Es gibt verschiedene Stellen, die Auskunft über die AWN geben. Am einfachsten s
 
 Datenquelle: [Open Data Basel-Stadt: Wohnungen](https://data.bs.ch/explore/dataset/100232)
 """,
-    "info_multiple": """Der Multi-Modus erlaubt es, mehrere Gebäude zu selcktieren und anschliessend eine Liste alle Wohnungen mit AWN Nummer dieser Gebäude Herunter zu laden.
-    """
+    "info_multiple": """Der Multi-Modus erlaubt es, mehrere Gebäude zu auszuwählen und anschliessend eine Liste aller Wohnungen mit ihren AWN-Nummern dieser Gebäude herunter zu laden. Wähle ein Adresse aus und drücke auf die Schaltfläche Adresse hinzufügen. Wiederhole diesen Schritt für alle Adressen, für die du die AWN-Nummern herunterladen möchtest. Die Wohnungen werden im unteren Teil des Formulars angezeigt, darunter folgt eine Karte, in welcher die ausgewählten Gebäude eingezeichnet sind. Wenn alle Adressen ausgewählt sind, drücke auf die Schaltfläche Wohnungen herunterladen. Die AWN-Nummern werden als CSV-Datei heruntergeladen und können von dir weiterbeearbeitet werden.
+    """,
 }

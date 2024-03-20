@@ -43,7 +43,6 @@ adr_df["longitude"] = adr_df["longitude"].astype(float)
 adr_df.to_parquet(ADR_FILE, engine="pyarrow")
 
 
-
 # print(adr_df.head())
 # streets = adr_df['strname'].unique()
 # streets.sort()
