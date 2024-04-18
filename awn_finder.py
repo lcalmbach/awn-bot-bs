@@ -1,11 +1,6 @@
 import streamlit as st
 import pandas as pd
-from const import (
-    ADR_FILE,
-    APARTMENT_FILE,
-)
 from tools import show_table
-from const import contact, contact_email
 from enum import Enum
 import folium
 import re
@@ -14,9 +9,11 @@ from streamlit_folium import folium_static
 from lang import get_lang
 
 
-contact_email = "vitus.thali@bs.ch"
-contact = "Vitus Thali"
-
+contact = "AWN Team"
+contact_email = "awn@bs.ch"
+ADR_FILE = "data/entries.parquet"
+APARTMENT_FILE = "data/apartments.parquet"
+STREETS_FILE = "data/streets.parquet"
 
 def lang(text):
     """
@@ -292,7 +289,7 @@ class AwnFinder:
                 ort_options = record["dplzname"]
                 self.egid = record.iloc[0]["egid"]
             self.location = st.selectbox(
-                f'{lang("location")}:', ort_options, disabled=True
+                f'{lang("location")}', ort_options, disabled=True
             )
 
         cols = st.columns(2)
@@ -309,7 +306,7 @@ class AwnFinder:
         if self.floor:
             st.markdown(
                 lang("select_apartment_with_explenation").format(
-                    contact_email, contact
+                    contact_email
                 ),
                 unsafe_allow_html=True,
             )

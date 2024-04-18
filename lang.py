@@ -9,8 +9,10 @@ import os
 
 language_dict = {
     "de": "Deutsch",
+    "en": "English",
     "fr": "Français",
     "it": "Italiano",
+
 }
 
 
