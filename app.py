@@ -2,7 +2,7 @@ import streamlit as st
 from awn_finder import AwnFinder
 from lang import get_used_languages, init_lang_dict_complete, get_lang
 
-__version__ = "0.0.14"
+__version__ = "0.0.15"
 __author__ = "Lukas Calmbach"
 __author_email__ = "lcalmbach@gmail.com"
 VERSION_DATE = "2024-10-14"
