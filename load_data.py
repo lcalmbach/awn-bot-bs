@@ -14,6 +14,7 @@ print("Downloading apartments")
 fields = ",".join(
     [
         "egid",
+        "edid",
         "ewid",
         "whgnr",
         "weinr",
@@ -37,7 +38,7 @@ egid_wohnungen = apa_df["egid"].unique()
 
 print("Downloading adresses")
 fields = ",".join(
-    ["egid", "strname", "deinr", "dplz4", "dplzname", "eingang_koordinaten", "doffadr"]
+    ["egid", "edid", "strname", "deinr", "dplz4", "dplzname", "eingang_koordinaten", "doffadr"]
 )
 url_entries = URL_TEMPLATE.format(100231, fields)
 adr_df = pd.read_csv(url_entries, sep=";")

@@ -43,6 +43,7 @@ class AwnFinder:
         self.addresses = pd.read_parquet(ADR_FILE)
         self.apartments = pd.read_parquet(APARTMENT_FILE)
         self.streets = list(self.addresses["strname"].unique())
+        self.apartments = self.add_address_to_apartment()
         self.locations = list(self.addresses["dplzname"].unique())
         self.streets.sort()
         self.apartment_df = pd.DataFrame()
@@ -50,6 +51,13 @@ class AwnFinder:
         self.buildings_df = pd.DataFrame()
         self.housenumber = None
 
+    def add_address_to_apartment(self):
+        # links then self.apartments and self.addresses dataframes using the egid and edid columns and adds the columns housenumber, plzname, location to the self.apartments dataframe
+        merged_apartments = pd.merge(self.apartments, self.addresses[['egid', 'deinr', 'strname', 'dplz4', 'dplzname']], on='egid', how='left')
+        merged_apartments = merged_apartments.rename(columns={'deinr': 'housenumber', 'dplz4': 'plz', 'dplzname': 'location'})
+        return merged_apartments
+    
+    
     def sort_house_numbers(self, housenumbers: list) -> list:
         def extract_parts(s):
             parts = re.split("([0-9]+)", s)
@@ -302,7 +310,6 @@ class AwnFinder:
                 self.floor = st.selectbox(lang("floor"), options=options_floors)
         else:
             self.floor = False
-
         if self.floor:
             st.markdown(
                 lang("select_apartment_with_explenation").format(
@@ -317,6 +324,9 @@ class AwnFinder:
             fields = [
                 "egid",
                 "whgnr",
+                "strname",
+                "housenumber",
+                "location",
                 "wstwk_decoded",
                 "wbez",
                 "warea",
@@ -328,6 +338,9 @@ class AwnFinder:
             df.columns = [
                 "EGID",
                 "AWN",
+                "Strasse",
+                "Hausnummer",
+                "Ort",
                 "Stockwerk",
                 "Info",
                 "Fläche",
@@ -381,7 +394,7 @@ class AwnFinder:
 
     def format_response(self, response):
         includes = []
-        for include in assistant_responses[self.status.name]["includes"]:
+        for include in [self.status.name]["includes"]:
             if include == "adrs":
                 includes.append(self.get_address())
             if include == "floors":
