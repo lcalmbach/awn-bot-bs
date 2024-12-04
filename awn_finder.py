@@ -40,6 +40,8 @@ class Mode(Enum):
 class AwnFinder:
     def __init__(self):
         self.mode = Mode.SINGLE.value
+        self.housenumber = None
+        self.args = {}
         self.addresses = pd.read_parquet(ADR_FILE)
         self.apartments = pd.read_parquet(APARTMENT_FILE)
         self.streets = list(self.addresses["strname"].unique())
@@ -49,14 +51,12 @@ class AwnFinder:
         self.apartment_df = pd.DataFrame()
         self.egid = 0
         self.buildings_df = pd.DataFrame()
-        self.housenumber = None
-
+        
     def add_address_to_apartment(self):
         # links then self.apartments and self.addresses dataframes using the egid and edid columns and adds the columns housenumber, plzname, location to the self.apartments dataframe
         merged_apartments = pd.merge(self.apartments, self.addresses[['egid', 'deinr', 'strname', 'dplz4', 'dplzname']], on='egid', how='left')
         merged_apartments = merged_apartments.rename(columns={'deinr': 'housenumber', 'dplz4': 'plz', 'dplzname': 'location'})
         return merged_apartments
-    
     
     def sort_house_numbers(self, housenumbers: list) -> list:
         def extract_parts(s):
@@ -319,6 +319,7 @@ class AwnFinder:
             )
             df = self.apartments[
                 (self.apartments["egid"] == self.egid)
+                & (self.apartments["housenumber"] == self.housenumber)
                 & (self.apartments["wstwk_decoded"] == self.floor)
             ]
             fields = [
