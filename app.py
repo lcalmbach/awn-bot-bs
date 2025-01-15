@@ -11,6 +11,7 @@ my_emoji = "🏠"
 GIT_REPO = "https://github.com/lcalmbach/awn-bot-bs"
 PAGE = "app"
 
+
 def display_language_selection():
     """
     The display_info function displays information about the application. It
