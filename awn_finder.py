@@ -54,7 +54,12 @@ class AwnFinder:
         
     def add_address_to_apartment(self):
         # links then self.apartments and self.addresses dataframes using the egid and edid columns and adds the columns housenumber, plzname, location to the self.apartments dataframe
-        merged_apartments = pd.merge(self.apartments, self.addresses[['egid', 'deinr', 'strname', 'dplz4', 'dplzname']], on='egid', how='left')
+        merged_apartments = merged_apartments = pd.merge(
+            self.apartments,
+            self.addresses[['egid', 'edid', 'deinr', 'strname', 'dplz4', 'dplzname']],
+            on=['egid', 'edid'],
+            how='left'
+        )
         merged_apartments = merged_apartments.rename(columns={'deinr': 'housenumber', 'dplz4': 'plz', 'dplzname': 'location'})
         return merged_apartments
     

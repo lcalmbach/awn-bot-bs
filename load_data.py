@@ -31,6 +31,12 @@ r = requests.get(url_apartments, proxies=PROXY_DICT).text
 
 # apa_df = pd.read_csv(io.StringIO(r), sep=";")
 apa_df = pd.read_csv(url_apartments, sep=";")
+apa_df = apa_df = apa_df[
+    apa_df['whgnr'].notnull() & 
+    (apa_df['whgnr'].astype(str).str.strip() != '') & 
+    (apa_df['whgnr'].astype(str).str.lower() != 'nan')
+]
+
 apa_df.to_parquet(
     APARTMENT_FILE,
 )
