@@ -49,7 +49,8 @@ class AwnFinder:
         self.locations = list(self.addresses["dplzname"].unique())
         self.streets.sort()
         self.apartment_df = pd.DataFrame()
-        self.egid = 0
+        self.egid = 0 # GWR Gebäudecode
+        self.edid = 0 # Eingangsnummer
         self.buildings_df = pd.DataFrame()
         
     def add_address_to_apartment(self):
@@ -113,8 +114,8 @@ class AwnFinder:
         folium_static(map)
 
     def show_multiple_mode(self):
-        def get_apartment(egid: int):
-            df = self.apartments[self.apartments["egid"] == egid]
+        def get_apartment(egid: int, edid: int):
+            df = self.apartments[(self.apartments["egid"] == egid) & (self.apartments["edid"] == edid)]
             df = df[
                 ["egid", "whgnr", "wstwk_decoded", "wbez", "warea", "wazim", "ewid"]
             ]
@@ -188,7 +189,8 @@ class AwnFinder:
         record = self.addresses[
             (self.addresses["strname"] == self.street)
             & (self.addresses["deinr"] == self.housenumber)
-        ][["dplzname", "egid", "latitude", "longitude"]].drop_duplicates()
+        ][["dplzname", "egid", "edid", "latitude", "longitude"]].drop_duplicates()
+
         with cols[1]:
             location_placeholder = st.empty()
             if self.plz == f'<{lang("select_postal_code")}>':
@@ -197,6 +199,7 @@ class AwnFinder:
             else:
                 ort_options = record["dplzname"]
                 self.egid = record.iloc[0]["egid"]
+                self.edid = record.iloc[0]["edid"]
             self.location = location_placeholder.selectbox(
                 label=f'{lang("location")}:',
                 options = ort_options,
@@ -204,7 +207,7 @@ class AwnFinder:
             )
 
         if st.button(lang("add_address"), disabled=self.egid == 0):
-            self.apartment_df = pd.concat([self.apartment_df, get_apartment(self.egid)])
+            self.apartment_df = pd.concat([self.apartment_df, get_apartment(self.egid, self.edid)])
         cols = st.columns(2)
         with cols[0]:
             if len(self.apartment_df) > 0:
@@ -377,7 +380,6 @@ class AwnFinder:
     def get_records(self):
         addresses = self.addresses
         apartments = self.apartments
-        # st.write(self.args)
         if self.args["street"] > "":
             addresses = addresses[(addresses["strname"] == self.args["street"])]
         if self.args["housenumber"] > "":
