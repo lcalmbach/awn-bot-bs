@@ -46,6 +46,7 @@ class AwnFinder:
         self.apartments = pd.read_parquet(APARTMENT_FILE)
         self.streets = list(self.addresses["strname"].unique())
         self.apartments = self.add_address_to_apartment()
+        self.eingaenge = []
         self.locations = list(self.addresses["dplzname"].unique())
         self.streets.sort()
         self.apartment_df = pd.DataFrame()
@@ -114,33 +115,44 @@ class AwnFinder:
         folium_static(map)
 
     def show_multiple_mode(self):
-        def get_apartment(egid: int, edid: int):
-            df = self.apartments[(self.apartments["egid"] == egid) & (self.apartments["edid"] == edid)]
-            df = df[
-                ["egid", "whgnr", "wstwk_decoded", "wbez", "warea", "wazim", "ewid"]
-            ]
-            df.columns = [
+        def get_apartment(egid: int, eingaenge: list):
+            mask = self.apartments["egid"] == egid
+            if len(eingaenge) > 0:
+                mask &= self.apartments["edid"].isin(eingaenge)
+            column_mapping = {
+                "egid": "EGID",
+                "whgnr": "AWN",
+                "wstwk_decoded": "Stockwerk",
+                "wbez": "Info",
+                "warea": "Fläche",
+                "wazim": "Anz. Zimmer",
+                "ewid": "EWID",
+                "strname": "Strasse",
+                "housenumber": "Nr"
+            }
+
+            # Ziel-Spaltenreihenfolge inkl. Adresse
+            final_columns = [
+                "Adresse",
                 "EGID",
                 "AWN",
                 "Stockwerk",
                 "Info",
                 "Fläche",
                 "Anz. Zimmer",
-                "EWID",
+                "EWID"
             ]
-            df["Adresse"] = (
-                self.street
-                + " "
-                + self.housenumber
-                + ", "
-                + self.plz
-                + " "
-                + self.location
+            df = (
+                self.apartments
+                .loc[mask, column_mapping.keys()]
+                .drop_duplicates()
+                .rename(columns=column_mapping)
+                .assign(
+                    Adresse=lambda d: d["Strasse"].fillna("").astype(str) + " " + d["Nr"].fillna("").astype(str)
+                )[final_columns]
             )
-            cols = df.columns.tolist()
-            cols = [cols[-1]] + cols[:-1]
-            df = df[cols]
             return df
+    
 
         self.show_info()
         st.markdown(f'**{lang("add_address_button_label")}:**')
@@ -167,8 +179,30 @@ class AwnFinder:
             self.housenumber = hnr_placeholder.selectbox(
                 lang("house_number"),
                 options=hrn_options,
-                disabled=self.street == "<Wähle eine Strasse>",
+                disabled=self.street == f'<{lang("select_street")}>',
             )
+            if self.housenumber != f'<{lang("select_house_number")}>':
+                matching_rows = self.addresses[
+                    (self.addresses["strname"] == self.street) &
+                    (self.addresses["deinr"] == self.housenumber)
+                ]
+
+                if not matching_rows.empty:
+                    self.egid = matching_rows.iloc[0]['egid']
+                else:
+                    self.egid = None  # oder raise ValueError("No matching address found.")
+                eingaenge = self.addresses[self.addresses['egid']==self.egid]
+                if len(eingaenge) > 1:
+                    eingange_options = dict(zip(eingaenge['edid'], eingaenge['strname'] + ' ' + eingaenge['deinr']))
+                    self.eingaenge = st.multiselect(
+                        lang("entrances"),
+                        options=list(eingange_options.keys()),
+                        format_func=lambda x: eingange_options[x],
+                        help=lang("help_entrances")
+                    )
+                else:
+                    self.eingaenge = []
+                    
         # if self.housenumber != f'<{lang("select_house_number")}>':
         with cols[0]:
             po_placeholder = st.empty()
@@ -181,15 +215,20 @@ class AwnFinder:
                     & (self.addresses["deinr"] == self.housenumber)
                 ]["dplz4"].unique()
                 plz_options = [str(x) for x in plz_options if x is not None]
+            
+            
             self.plz = po_placeholder.selectbox(
                 lang("postal_code"),
                 options=plz_options,
                 disabled=self.housenumber == f'<{lang("select_house_number")}>'
             )
-        record = self.addresses[
-            (self.addresses["strname"] == self.street)
-            & (self.addresses["deinr"] == self.housenumber)
-        ][["dplzname", "egid", "edid", "latitude", "longitude"]].drop_duplicates()
+        mask = self.addresses["egid"] == self.egid
+        if len(self.eingaenge) > 0:
+            mask &= self.addresses["edid"].isin(self.eingaenge)
+        record = (
+            self.addresses.loc[mask, ["dplzname", "egid", "edid", "latitude", "longitude"]]
+            .drop_duplicates()
+        )
 
         with cols[1]:
             location_placeholder = st.empty()
@@ -207,7 +246,7 @@ class AwnFinder:
             )
 
         if st.button(lang("add_address"), disabled=self.egid == 0):
-            self.apartment_df = pd.concat([self.apartment_df, get_apartment(self.egid, self.edid)])
+            self.apartment_df = pd.concat([self.apartment_df, get_apartment(self.egid, self.eingaenge)])
         cols = st.columns(2)
         with cols[0]:
             if len(self.apartment_df) > 0:

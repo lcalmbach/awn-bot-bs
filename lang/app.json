@@ -4,7 +4,7 @@
         "powered_by": "Powered by",
         "version": "Version",
         "language": "Sprache",
-        "translation": "\u00dcbersetzung",
+        "translation": "Übersetzung",
         "data_source": "Data Source"
     },
     "de": {
@@ -12,16 +12,16 @@
         "powered_by": "Powered by",
         "version": "Version",
         "language": "Sprache",
-        "translation": "\u00dcbersetzung",
+        "translation": "Übersetzung",
         "data_source": "Data Source"
     },
     "fr": {
-        "created_by": "Application cr\u00e9\u00e9e par",
-        "powered_by": "Propuls\u00e9 par",
+        "created_by": "Application créée par",
+        "powered_by": "Propulsé par",
         "version": "Version",
         "language": "Langue",
         "translation": "Traduction",
-        "data_source": "Source de donn\u00e9es"
+        "data_source": "Source de données"
     },
     "it": {
         "created_by": "App creata da",

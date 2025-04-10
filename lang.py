@@ -29,7 +29,7 @@ def init_lang_dict_complete(folder_path: str):
         if filename.endswith(".json"):
             file_path = os.path.join(folder_path, filename)
             try:
-                with open(file_path, "r") as file:
+                with open(file_path, "r", encoding="utf-8") as file:
                     st.session_state["lang_dict"][page] = json.load(file)
             except FileNotFoundError:
                 print("File not found.")

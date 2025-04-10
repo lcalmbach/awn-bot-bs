@@ -2,10 +2,10 @@ import streamlit as st
 from awn_finder import AwnFinder
 from lang import get_used_languages, init_lang_dict_complete, get_lang
 
-__version__ = "0.0.19"
+__version__ = "0.0.20"
 __author__ = "Lukas Calmbach"
 __author_email__ = "lukas.calmbach@bs.ch"
-VERSION_DATE = "2025-04-08"
+VERSION_DATE = "2025-04-10"
 my_name = "awn-finder-bs"
 my_emoji = "🏠"
 GIT_REPO = "https://github.com/lcalmbach/awn-bot-bs"
