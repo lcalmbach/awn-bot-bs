@@ -40,7 +40,7 @@ def get_impressum():
     version = lang["version"]
     translation = lang["translation"]
     data_source = lang["data_source"]
-    last_data_sync = 'Letzte Daten-Aktualisierung'
+    last_data_sync = lang["last_data_sync"]
     text = f"""<div style='background-color:powderblue; padding: 10px;border-radius: 15px;'>
         <small>{created_by}: <a href='mailto:informatik.stata@bs.ch'>Statistisches Amt Basel-Stadt</a><br>
         {version}: {__version__} ({VERSION_DATE})<br>
