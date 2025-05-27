@@ -5,7 +5,8 @@
         "version": "Version",
         "language": "Sprache",
         "translation": "Übersetzung",
-        "data_source": "Data Source"
+        "data_source": "Datenquelle", 
+        "last_data_sync": "Letzte Daten-Aktualisierung"
     },
     "de": {
         "created_by": "App erstellt von",
@@ -13,7 +14,8 @@
         "version": "Version",
         "language": "Sprache",
         "translation": "Übersetzung",
-        "data_source": "Data Source"
+        "data_source": "Data Source",
+        "last_data_sync": "Letzte Daten-Aktualisierung"
     },
     "fr": {
         "created_by": "Application créée par",
@@ -21,7 +23,8 @@
         "version": "Version",
         "language": "Langue",
         "translation": "Traduction",
-        "data_source": "Source de données"
+        "data_source": "Source de données",
+        "last_data_sync": " Dernière mise à jour des données"
     },
     "it": {
         "created_by": "App creata da",
@@ -29,7 +32,8 @@
         "version": "Versione",
         "language": "Lingua",
         "translation": "Traduzione",
-        "data_source": "Fonte dati"
+        "data_source": "Fonte dati",
+        "last_data_sync": "Ultimo aggiornamento dei dati"
     },
     "en": {
         "created_by": "App created by",
@@ -37,6 +41,7 @@
         "version": "Version",
         "language": "Language",
         "translation": "Translation",
-        "data_source": "Data Source"
+        "last_data_sync": "Letzte Daten-Aktualisierung",
+        "data_source": "Last data update"
     }
 }

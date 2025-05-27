@@ -1,6 +1,8 @@
 import pandas as pd
 import requests
 import io
+import json
+from datetime import date
 
 PROXY_DICT = {"https": "http://dpdstatasvsql05:dpdstatasvsql05_@proxy1.bs.ch:3128"}
 ADR_FILE = "data/entries.parquet"
@@ -56,6 +58,14 @@ adr_df[["latitude", "longitude"]] = adr_df["eingang_koordinaten"].str.split(
 adr_df["latitude"] = adr_df["latitude"].astype(float)
 adr_df["longitude"] = adr_df["longitude"].astype(float)
 adr_df.to_parquet(ADR_FILE, engine="pyarrow")
+
+# update the data synch timestamp
+today = date.today().isoformat()
+with open("settings.json", "r") as file:
+    settings = json.load(file)
+settings["last_update"] = today
+with open("settings.json", "w") as file:
+    json.dump(settings, file, indent=4)
 
 print("Download completed")
 
